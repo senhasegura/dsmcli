@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
-	dsmSdk "git.mt4.com.br/dev/senhasegura/devops/dsm/senseg-sdk/dsm"
-	isoSdk "git.mt4.com.br/dev/senhasegura/devops/dsm/senseg-sdk/iso"
+	dsmSdk "github.com/senhasegura/dsmcli/senseg-sdk/dsm"
+	isoSdk "github.com/senhasegura/dsmcli/senseg-sdk/iso"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"git.mt4.com.br/dev/senhasegura/devops/dsm/cmd/dsm/kubernetes"
+	"github.com/senhasegura/dsmcli/cmd/dsm/kubernetes"
 )
 
 var KubernetesCmd = &cobra.Command{

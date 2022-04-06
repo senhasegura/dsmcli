@@ -3,7 +3,7 @@ package dsm
 import (
 	"net/url"
 
-	sdk "git.mt4.com.br/dev/senhasegura/devops/dsm/senseg-sdk/iso"
+	sdk "github.com/senhasegura/dsmcli/senseg-sdk/iso"
 )
 
 type VariableClient struct {

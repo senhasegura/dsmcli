@@ -1,4 +1,4 @@
-module git.mt4.com.br/dev/senhasegura/devops/dsm
+module github.com/senhasegura/dsmcli
 
 go 1.16
 

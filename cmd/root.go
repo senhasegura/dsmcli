@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"git.mt4.com.br/dev/senhasegura/devops/dsm/cmd/dsm"
+	"github.com/senhasegura/dsmcli/cmd/dsm"
 )
 
 var cfgFile string

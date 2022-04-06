@@ -16,7 +16,7 @@ limitations under the License.
 package main
 
 import (
-	"git.mt4.com.br/dev/senhasegura/devops/dsm/cmd"
+	"github.com/senhasegura/dsmcli/cmd"
 )
 
 func main() {
