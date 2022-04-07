@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"os"
 
-	sdk "github.com/senhasegura/dsmcli/senseg-sdk/iso"
+	sdk "github.com/senhasegura/dsmcli/sdk/iso"
 )
 
 type ApplicationClient struct {

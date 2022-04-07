@@ -49,7 +49,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/senseg/.config.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/dsm/.config.yaml)")
 
 	rootCmd.AddCommand(dsm.KubernetesCmd)
 	rootCmd.AddCommand(dsm.RunbCmd)
@@ -66,10 +66,10 @@ func initConfig() {
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".dsm" (without extension).
-		viper.AddConfigPath(home + "/senseg")
+		viper.AddConfigPath(home + "/dsm")
 		viper.SetConfigName(".config")
 		viper.SetConfigType("yaml")
-		cfgFile = home + "/senseg/.config"
+		cfgFile = home + "/dsm/.config"
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
