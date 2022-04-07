@@ -18,8 +18,8 @@ package kubernetes
 import (
 	"fmt"
 
-	dsmSdk "github.com/senhasegura/dsmcli/senseg-sdk/dsm"
-	isoSdk "github.com/senhasegura/dsmcli/senseg-sdk/iso"
+	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
+	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
