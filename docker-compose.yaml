@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  senseg-app:
+    build: .
+    container_name: senseg-app
+    volumes:
+            - .:/go/src/
