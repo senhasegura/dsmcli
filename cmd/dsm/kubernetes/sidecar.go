@@ -22,7 +22,6 @@ import (
 	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
 	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var SidecarCmd = &cobra.Command{
@@ -30,13 +29,9 @@ var SidecarCmd = &cobra.Command{
 	Short: "Periodically according to the secrets ttl a loop, with the information from /etc/senhasegura/ request the application secrets and save it in the folder /etc/run/secrets/sechasegura/[app_name] to keep updated",
 	Long:  `Periodically according to the secrets ttl a loop, with the information from /etc/senhasegura/ request the application secrets and save it in the folder /etc/run/secrets/sechasegura/[app_name] to keep updated`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, _ := isoSdk.NewClient(
-			viper.GetString("SENHASEGURA_URL"),
-			viper.GetString("SENHASEGURA_CLIENT_ID"),
-			viper.GetString("SENHASEGURA_CLIENT_SECRET"),
-			Verbose);
-		appClient := dsmSdk.NewApplicationClient(&client, ApplicationName, Environment, System);
-		
+		client, _ := isoSdk.NewClient(getConfig())
+		appClient := dsmSdk.NewApplicationClient(&client, ApplicationName, Environment, System)
+
 		for {
 			secrets, err := appClient.GetSecrets()
 			if err != nil {
@@ -54,7 +49,7 @@ func init() {
 	SidecarCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
 	SidecarCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
 	SidecarCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
-	SidecarCmd.Flags().StringVar(&ApplicationName, "app-name", "", "Application name (required)")
+	SidecarCmd.Flags().StringVarP(&ApplicationName, "app-name", "a", "", "Application name (required)")
 	SidecarCmd.MarkFlagRequired("environment")
 	SidecarCmd.MarkFlagRequired("system")
 	SidecarCmd.MarkFlagRequired("app-name")

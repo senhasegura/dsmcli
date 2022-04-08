@@ -27,7 +27,7 @@ import (
 	"github.com/senhasegura/dsmcli/cmd/dsm"
 )
 
-var cfgFile string
+var Config string
 var Verbose bool
 
 var rootCmd = &cobra.Command{
@@ -49,7 +49,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/dsm/.config.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&Config, "config", "c", "", "config file (default is $HOME/dsm/.config.yaml)")
 
 	rootCmd.AddCommand(dsm.KubernetesCmd)
 	rootCmd.AddCommand(dsm.RunbCmd)
@@ -57,22 +57,26 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
+	viper.AutomaticEnv() // read in environment variables that match
+
+	if Config != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		viper.SetConfigFile(Config)
+	} else if envConfig := viper.GetString("SENHASEGURA_CONFIG_FILE"); envConfig != "" {
+		// Use config file from the environment.
+		viper.SetConfigFile(envConfig)
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".dsm" (without extension).
-		viper.AddConfigPath(home + "/dsm")
+		// Search config in home directory with name ".config" (without extension).
+		viper.AddConfigPath(home)
 		viper.SetConfigName(".config")
 		viper.SetConfigType("yaml")
-		cfgFile = home + "/dsm/.config"
+		Config = home + "/.config"
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
@@ -80,7 +84,5 @@ func initConfig() {
 		if strings.Contains(err.Error(), "unmarshal") {
 			log.Fatalf(`Invalid yaml syntax on config file '%s'`, viper.ConfigFileUsed())
 		}
-		log.Fatal(`The configuration file `+viper.ConfigFileUsed()+` does not exist or does not have the correct permissions.
-Use the flag '--config' with the location of the settings file you want to use or use the command 'config' to manually configure settings for your user` + err.Error())
 	}
 }

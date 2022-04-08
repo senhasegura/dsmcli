@@ -34,7 +34,7 @@ var KubernetesCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return nil;
+		return nil
 	},
 }
 
@@ -44,32 +44,16 @@ func init() {
 }
 
 func ValidadeEnvVars() error {
-	if (viper.GetString("SENHASEGURA_SECRETS_FOLDER") == "") {
+	if viper.GetString("SENHASEGURA_SECRETS_FOLDER") == "" {
 		os.Setenv("SENHASEGURA_SECRETS_FOLDER", "/var/run/secrets")
 	}
+
 	v("Using secret folder: %s", viper.GetString("SENHASEGURA_SECRETS_FOLDER"))
-	
 
 	err := os.MkdirAll(viper.GetString("SENHASEGURA_SECRETS_FOLDER"), os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("invalid config 'SENHASEGURA_SECRETS_FOLDER': %s - %s", viper.GetString("SENHASEGURA_SECRETS_FOLDER"), err.Error())
 	}
-	
-	url := viper.GetString("SENHASEGURA_URL")
-	if (url == "") {
-		return fmt.Errorf("'SENHASEGURA_URL' must be defined as env var or in config file %s", viper.ConfigFileUsed())
-	}
 
-	clientId := viper.GetString("SENHASEGURA_CLIENT_ID")
-	if (clientId == "") {
-		return fmt.Errorf("'SENHASEGURA_CLIENT_ID' must be defined as env var or in config file %s", viper.ConfigFileUsed())
-	}
-
-
-	clientSecret := viper.GetString("SENHASEGURA_CLIENT_SECRET")
-	if (clientSecret == "") {
-		return fmt.Errorf("'SENHASEGURA_CLIENT_SECRET' must be defined as env var or in config file %s", viper.ConfigFileUsed())
-	}
-
-	return nil;
+	return nil
 }

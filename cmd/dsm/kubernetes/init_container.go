@@ -21,7 +21,6 @@ import (
 	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
 	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var Verbose bool
@@ -68,12 +67,8 @@ var InitContainerCmd = &cobra.Command{
     With the information from /etc/senhasegura/ request the application secrets and save it in the folder /etc/run/secrets/sechasegura/[app_name]
 	`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client, _ := isoSdk.NewClient(
-			viper.GetString("SENHASEGURA_URL"),
-			viper.GetString("SENHASEGURA_CLIENT_ID"),
-			viper.GetString("SENHASEGURA_CLIENT_SECRET"),
-			Verbose);
-		appClient := dsmSdk.NewApplicationClient(&client, ApplicationName, Environment, System);
+		client, _ := isoSdk.NewClient(getConfig())
+		appClient := dsmSdk.NewApplicationClient(&client, ApplicationName, Environment, System)
 
 		switch ExecutionType {
 		case "iso":
@@ -99,7 +94,7 @@ func init() {
 	InitContainerCmd.Flags().StringVarP(&ExecutionType, "type", "t", "iso", "Execution type [iso, inject-template, inject]")
 	InitContainerCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
 	InitContainerCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
-	InitContainerCmd.Flags().StringVar(&ApplicationName, "app-name", "", "Application name (required)")
+	InitContainerCmd.Flags().StringVarP(&ApplicationName, "app-name", "a", "", "Application name (required)")
 	InitContainerCmd.MarkFlagRequired("environment")
 	InitContainerCmd.MarkFlagRequired("system")
 	InitContainerCmd.MarkFlagRequired("app-name")
@@ -150,7 +145,7 @@ func inject(appClient dsmSdk.ApplicationClient) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -166,6 +161,6 @@ func injectTemplate(appClient dsmSdk.ApplicationClient) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
