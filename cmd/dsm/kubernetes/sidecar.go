@@ -19,9 +19,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
 	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
-	"github.com/spf13/cobra"
 )
 
 var SidecarCmd = &cobra.Command{
@@ -46,7 +47,7 @@ var SidecarCmd = &cobra.Command{
 }
 
 func init() {
-	SidecarCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
+	SidecarCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
 	SidecarCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
 	SidecarCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
 	SidecarCmd.Flags().StringVarP(&ApplicationName, "app-name", "a", "", "Application name (required)")

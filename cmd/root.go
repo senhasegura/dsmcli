@@ -32,13 +32,10 @@ var Verbose bool
 
 var rootCmd = &cobra.Command{
 	Use:   "dsm",
-	Short: "A helper to interact with senhasegura appications.",
-	Long: `The senhasegura dsm is a unified tool to management senhasegura devops services.
-With this tool, you'll be able to use senhasegura dsm's services from the command line and automate
-them using scripts.
+	Short: "A command line interface to interact with senhasegura DSM API.",
+	Long: `DSM CLI is an unified tool to manage senhasegura services. With this tool, you'll be able to use senhasegura DSM services from the command line and automate them using scripts. The main purpose of this tool is to be an agnostic plugin for intercepting environment variables and injecting secrets into systems and CI/CD pipelines.
 
-The senhasegura CLI offers features for dvops including init_container, sidecar and runb support to
-help you strengthen the security of your shared credentials with containers and ephemeral machines.`,
+	Using this plugin, DevOps teams have an easy way to centralize application and secret data through senhasegura DSM, providing a secure way for the application to consume sensible variables during the build and deployment steps.`,
 }
 
 func Execute() {
@@ -48,8 +45,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
-	rootCmd.PersistentFlags().StringVarP(&Config, "config", "c", "", "config file (default is $HOME/dsm/.config.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
+	rootCmd.PersistentFlags().StringVarP(&Config, "config", "c", "", "Configuration file (default is $HOME/.config.yaml)")
 
 	rootCmd.AddCommand(dsm.KubernetesCmd)
 	rootCmd.AddCommand(dsm.RunbCmd)

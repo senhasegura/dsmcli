@@ -90,8 +90,8 @@ var InitContainerCmd = &cobra.Command{
 }
 
 func init() {
-	InitContainerCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "verbose mode")
-	InitContainerCmd.Flags().StringVarP(&ExecutionType, "type", "t", "iso", "Execution type [iso, inject-template, inject]")
+	InitContainerCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
+	InitContainerCmd.Flags().StringVarP(&ExecutionType, "type", "t", "iso", "Execution type [iso, inject, inject-template]")
 	InitContainerCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
 	InitContainerCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
 	InitContainerCmd.Flags().StringVarP(&ApplicationName, "app-name", "a", "", "Application name (required)")

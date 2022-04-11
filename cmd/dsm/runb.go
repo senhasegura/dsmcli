@@ -18,17 +18,17 @@ package dsm
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/pkg/errors"
-	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
-	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
+	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 )
 
 var PreparedData map[string]string
@@ -302,7 +302,7 @@ func loadMapVars() string {
 		v("Using mapping file: %s\n", viper.GetString("SENHASEGURA_MAPPING_FILE"))
 	}
 
-	content, err := ioutil.ReadFile(viper.GetString("SENHASEGURA_MAPPING_FILE"))
+	content, err := os.ReadFile(viper.GetString("SENHASEGURA_MAPPING_FILE"))
 	if err != nil {
 		return ""
 	}
