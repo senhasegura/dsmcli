@@ -40,6 +40,9 @@ dsm runb \
     --environment <environment name> \
     --config <path to config file>
 ```
+> **Using Environment Variables**
+> 
+> It is possible to use a **SENHASEGURA_CONFIG_FILE** environment variable to define the configuration file location.
 
 Being agnostic means that it can run in any environment or CI/CD tool, but DSM CLI already comes with some additional configuration allowing you to integrate more seamlessly with your tool.
 
@@ -60,47 +63,6 @@ This way, developers will not have to worry about injecting secrets during pipel
 > **CI/CD Solutions**
 > 
 > By default DSM CLI can parse the secrets and inject it on tools like GitHub, Azure DevOps, Bamboo, BitBucket, CircleCI, TeamCity and Linux (default option). You can change the default option with the --tool-name argument during its execution.
-
-## Using DSM CLI as Kubernetes Sidecar
-
-The DSM CLI also have an option to run similarly to the Kubernetes Sidecar plugin, where it fetches the secrets from senhasegura DSM and inject them as files in a user defined folder (usually /var/run/secrets/senhasegura).
-
-This method also allows you to run it as sidecar or init-container. As a sidecar, DSM CLI will run continuously, updating the secrets every 120 seconds, while as init-container it will run only once during its execution.
-
-You can use the following commands to execute it as sidecar:
-
-```bash
-dsm kubernetes sidecar \
-    --app-name <application name>
-    --system <system name> \
-    --environment <environment name> \
-    --config <path to config file>
-```
-
-Or the following to execute it as init-container:
-
-```bash
-dsm kubernetes init-container \
-    --app-name <application name>
-    --system <system name> \
-    --environment <environment name> \
-    --config <path to config file>
-```
-
-> **Inject Secrets on the Default Folder**
-> 
-> The default folder for secret injection is `/var/run/secrets/senhasegura/<secret identifier>`. To inject secrets in the default folder make sure you run it with administrative privileges.
-
-> **Change Secrets Default Folder**
-> 
-> Additionally, in the config file you can define the **SENHASEGURA_SECRETS_FOLDER** with a path where you want the plugin to make the secret data available, as in the example:
-
-``` yaml title=".config.yaml"
-SENHASEGURA_URL: "<senhasegura URL>"
-SENHASEGURA_CLIENT_ID: "<senhasegura Client ID>"
-SENHASEGURA_CLIENT_SECRET: "<senhasegura Client Secret>"
-SENHASEGURA_SECRETS_FOLDER: "<senhasegura Secrets Destination Folder>"
-```
 
 ## Using DSM CLI to Register and Update Secrets
 
