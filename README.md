@@ -66,7 +66,7 @@ This way, developers will not have to worry about injecting secrets during pipel
 
 ## Using DSM CLI to Register and Update Secrets
 
-Using DSM CLI also allows developers to create or update secret values directly from the pipeline using a mapping file called **senhasegura-mapping.json**. This file makes it easy to identify secret variables through their names and automatically register them as secrets on senhasegura DSM.
+Using DSM CLI also allows developers to create or update secret values directly from the pipeline using a mapping file. This file makes it easy to identify secret variables through their names and automatically register them as secrets on senhasegura DSM.
 
 To do that, the only additional configuration needed is actually to provide the mapping file together with the executable and the configuration file. Here is an example of mapping file's content:
 
@@ -109,7 +109,7 @@ This file can be broken down in 3 main blocks:
 
 > **Mapping File Name**
 > 
-> This file should be named exactly as senhasegura-mapping.json and should be on the same directory level as the executable.
+> To set the name of the file so DSM CLI can read it use the **SENHASEGURA_MAPPING_FILE** option in the configuration file or set its value as an environment variable pointing to the file full path.
 
 > **Type Values**
 > 
