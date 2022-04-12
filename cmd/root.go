@@ -29,8 +29,6 @@ import (
 
 var Config string
 
-// var Verbose bool
-
 var rootCmd = &cobra.Command{
 	Use:   "dsm",
 	Short: "A command line interface to interact with senhasegura DSM API.",
@@ -48,7 +46,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
 	rootCmd.PersistentFlags().StringVarP(&Config, "config", "c", "", "Configuration file (default is $HOME/.config.yaml)")
 
 	rootCmd.AddCommand(dsm.RunbCmd)
@@ -56,13 +53,14 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	viper.AutomaticEnv() // read in environment variables that match
+	// Read in environment variables
+	viper.AutomaticEnv()
 
 	if Config != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(Config)
 	} else if envConfig := viper.GetString("SENHASEGURA_CONFIG_FILE"); envConfig != "" {
-		// Use config file from the environment.
+		// Use config file from the environment variable.
 		viper.SetConfigFile(envConfig)
 	} else {
 		// Find home directory.
