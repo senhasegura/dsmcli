@@ -79,6 +79,7 @@ func (c *Client) Authenticate() {
 	data.Set("client_secret", c.clientSecret)
 
 	var oauth2Resp Oauth2Response
+
 	err := c.Post(resource, data, &oauth2Resp)
 	if err != nil {
 		log.Fatal("Error trying to authenticate: " + err.Error())

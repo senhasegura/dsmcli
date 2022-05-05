@@ -147,7 +147,14 @@ func injectLinux(secrets []dsmSdk.Secret) error {
 
 func inject(secrets []dsmSdk.Secret, format string) error {
 	v("Injecting secrets!\n")
-	file, err := os.OpenFile(".runb.vars", os.O_CREATE|os.O_RDWR, 0666)
+
+	secretsFile := viper.GetString("SENHASEGURA_SECRETS_FILE")
+
+	if secretsFile == "" {
+		secretsFile = ".runb.vars"
+	}
+
+	file, err := os.OpenFile(secretsFile, os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		return err
 	}
@@ -160,7 +167,7 @@ func inject(secrets []dsmSdk.Secret, format string) error {
 	}
 
 	for key, value := range PreparedData {
-		v("Injecting secret: %s...", key)
+		v("Injecting secret into %s: %s...", secretsFile, key)
 		_, err = file.WriteString(fmt.Sprintf(format, key, value))
 		if err != nil {
 			return err
