@@ -31,7 +31,7 @@ import (
 	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 )
 
-var PreparedData map[string]string
+var kv map[string]string
 
 var Verbose bool
 var ToolName string
@@ -41,11 +41,11 @@ var ApplicationName string
 
 var RunbCmd = &cobra.Command{
 	Use:   "runb",
-	Short: "Running Belt plugin to insert/get/replace environment variables in most CI/CD process.",
-	Long:  `Running Belt plugin to insert/get/replace environment variables in most CI/CD process.`,
+	Short: "Running Belt plugin to insert/get/replace environment variables in most CI/CD pipelines.",
+	Long:  `Running Belt plugin to insert/get/replace environment variables in most CI/CD pipelines.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if isDisabled() {
-			return errors.Errorf("RUNB_DISABLED is set - Plugin is disabled")
+			return errors.Errorf("RUNB_DISABLED is set to true. Plugin is disabled.")
 		}
 
 		client, appClient, err := registerApplication()
@@ -80,12 +80,12 @@ var RunbCmd = &cobra.Command{
 func init() {
 	RunbCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
 	RunbCmd.Flags().StringVarP(&ToolName, "tool-name", "t", "linux", "Tool name [github, azure-devops, bamboo, bitbucket, circleci, teamcity, linux]")
-	RunbCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
+	RunbCmd.Flags().StringVarP(&ApplicationName, "application", "a", "", "Application name (required)")
 	RunbCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
-	RunbCmd.Flags().StringVarP(&ApplicationName, "app-name", "a", "", "Application name (required)")
-	RunbCmd.MarkFlagRequired("environment")
+	RunbCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
+	RunbCmd.MarkFlagRequired("application")
 	RunbCmd.MarkFlagRequired("system")
-	RunbCmd.MarkFlagRequired("app-name")
+	RunbCmd.MarkFlagRequired("environment")
 }
 
 func isDisabled() bool {
@@ -148,6 +148,13 @@ func injectLinux(secrets []dsmSdk.Secret) error {
 func inject(secrets []dsmSdk.Secret, format string) error {
 	v("Injecting secrets!\n")
 
+	kv = convertJSONToKV(secrets)
+
+	if len(kv) == 0 {
+		v("No secrets to be injected!\n")
+		return nil
+	}
+
 	secretsFile := viper.GetString("SENHASEGURA_SECRETS_FILE")
 
 	if secretsFile == "" {
@@ -159,54 +166,54 @@ func inject(secrets []dsmSdk.Secret, format string) error {
 		return err
 	}
 
-	PreparedData = prepareData(secrets)
+	for key, value := range kv {
+		v("Injecting secret into %s: %s.....", secretsFile, key)
 
-	if len(PreparedData) == 0 {
-		v("No secrets to be injected!\n")
-		return nil
-	}
-
-	for key, value := range PreparedData {
-		v("Injecting secret into %s: %s...", secretsFile, key)
 		_, err = file.WriteString(fmt.Sprintf(format, key, value))
 		if err != nil {
 			return err
 		}
-		v(" Sucess\n")
+
+		v("Success!\n")
 	}
 
 	file.Close()
+
 	v("Secrets injected!\n")
+
 	return nil
 }
 
-func prepareData(secrets []dsmSdk.Secret) map[string]string {
-	preparedData := make(map[string]string)
+func convertJSONToKV(secrets []dsmSdk.Secret) map[string]string {
+	kv := make(map[string]string)
 	for _, secret := range secrets {
 		for _, data := range secret.Data {
 			for k, v := range data {
-				preparedData[k] = v
+				kv[k] = v
 			}
 
 		}
 	}
-	return preparedData
+	return kv
 }
 
 func deleteCICDVariables() error {
 	v("Deleting %s variables...\n", ToolName)
 
-	if len(PreparedData) == 0 {
+	if len(kv) == 0 {
 		v("No variables to be deleted!\n")
 		return nil
 	}
 
 	switch ToolName {
-	case "github":
+	case "gitlab":
 		err := deleteGitLabVars()
 		if err != nil {
 			return err
 		}
+
+	case "github":
+		v("Is not possible to delete %s variables!\n", ToolName)
 
 	case "azure-devops":
 		v("Is not possible to delete %s variables!\n", ToolName)
@@ -245,16 +252,16 @@ func deleteGitLabVars() error {
 		return nil
 	}
 
-	if len(PreparedData) == 0 {
+	if len(kv) == 0 {
 		v("Deletion failed\n")
-		v("Has no credentials to exclude variables on 'github' tool ...\n")
+		v("Has no credentials to exclude variables on 'gitlab' tool ...\n")
 		return nil
 	}
 
 	headers := map[string]string{"PRIVATE-TOKEN": viper.GetString("GITLAB_ACCESS_TOKEN")}
 
-	for key := range PreparedData {
-		v("Delelting %s variable\n", key)
+	for key := range kv {
+		v("Deleting %s variable\n", key)
 
 		resource := fmt.Sprintf(
 			"%s/projects/%s/variables/%s",
@@ -304,7 +311,7 @@ func loadEnvVars() string {
 
 func loadMapVars() string {
 	if !IsSet("SENHASEGURA_MAPPING_FILE") {
-		v("Mapping file not found, proceeding\n")
+		v("Mapping file not found, proceeding...\n")
 	} else {
 		v("Using mapping file: %s\n", viper.GetString("SENHASEGURA_MAPPING_FILE"))
 	}
@@ -318,11 +325,4 @@ func loadMapVars() string {
 	mapVars = base64.StdEncoding.EncodeToString([]byte(mapVars))
 	mapVars = replaceSpecials(mapVars)
 	return mapVars
-}
-
-func replaceSpecials(value string) string {
-	value = strings.Replace(value, "+", "-", -1)
-	value = strings.Replace(value, "/", "_", -1)
-	value = strings.Replace(value, "=", ",", -1)
-	return value
 }

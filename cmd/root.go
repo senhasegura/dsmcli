@@ -60,7 +60,7 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(Config)
 	} else if envConfig := viper.GetString("SENHASEGURA_CONFIG_FILE"); envConfig != "" {
-		// Use config file from the environment variable.
+		// Use config from the environment variable.
 		viper.SetConfigFile(envConfig)
 	} else {
 		// Find home directory.
@@ -78,6 +78,8 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	} else {
+		fmt.Fprintln(os.Stderr, "No config file provided, proceeding...", viper.ConfigFileUsed())
+
 		if strings.Contains(err.Error(), "unmarshal") {
 			log.Fatalf(`Invalid yaml syntax on config file '%s'`, viper.ConfigFileUsed())
 		}
