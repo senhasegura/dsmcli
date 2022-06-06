@@ -7,11 +7,11 @@ Using this plugin, DevOps teams have an easy way to centralize application and s
 
 ## Using DSM CLI as Running Belt
 
-The CLI can be executed in two main modes: RunB and Kubernetes. In this section we are going to explain the usage through the RunB option.
+As for today, senhasegura DSM CLI can only be executed as Running Belt.
 
-As an executable binary, its installation is quite simple. Before deploying the plugin it is important to have a configured application using OAuth 2.0 and an authorization on senhasegura DSM. For more information on how to register applications and authorizations, please check the DSM manual in [Help Center](https://docs.senhasegura.io/?utm_source=Github&utm_medium=Link&utm_campaign=dsm_cli).
+As an executable binary, the installation is quite simple. Before deploying the plugin it is important to have a configured application using OAuth 2.0 and an authorization on senhasegura DSM. For more information on how to register applications and authorizations, please check the DSM manual in [Help Center](https://docs.senhasegura.io/?utm_source=Github&utm_medium=Link&utm_campaign=dsm_cli).
 
-The first thing needed is to the executable into a directory of your environment or CI/CD tool together with a configuration file for authentication on senhasegura DSM. After that, DSM CLI need information from the configured application such as its name, system and environment so it can retrieve the secrets.
+The first thing needed is to place the executable into a directory of your environment or CI/CD tool together with a configuration file for authentication on senhasegura DSM. After that, DSM CLI need information from the configured application such as its name, system and environment so it can retrieve the secrets.
 
 For the configuration file, it should be a .yaml file containing the following information from senhasegura DSM:
 
@@ -19,12 +19,21 @@ For the configuration file, it should be a .yaml file containing the following i
 - **_SENHASEGURA_CLIENT_ID:_** An authorization Client ID for authentication.
 - **_SENHASEGURA_CLIENT_SECRET:_** An authorization Client Secret for authentication.
 
-Example of a **.config.yaml** file:
+DSM CLI accepts extra parameters. Here is an axample of a **full .config.yaml** file:
 
 ```yaml title=".config.yaml"
+# Default properties needed for execution
 SENHASEGURA_URL: "<senhasegura URL>"
 SENHASEGURA_CLIENT_ID: "<senhasegura Client ID>"
 SENHASEGURA_CLIENT_SECRET: "<senhasegura Client Secret>"
+SENHASEGURA_MAPPING_FILE: "<Secrets variable name mapping file with path>"
+SENHASEGURA_SECRETS_FILE: "<File name with path to inject Secret>"
+RUNB_DISABLED: 0
+
+# Properties needed to delete GitLab variables
+GITLAB_ACCESS_TOKEN: "<Your GitLab Access Token>"
+CI_API_V4_URL: "<Your GitLab API URL as for V4>"
+CI_PROJECT_ID: "<Your GitLab Project ID>"
 ```
 
 > **Using Environment Variables**
@@ -35,7 +44,7 @@ To execute the binary you can run the following command line providing the neede
 
 ```bash
 dsm runb \
-    --app-name <application name> \
+    --application <application name> \
     --system <system name> \
     --environment <environment name> \
     --config <path to config file>
@@ -48,7 +57,7 @@ Being agnostic means that it can run in any environment or CI/CD tool, but DSM C
 
 After executing the plugin with the necessary informations, it will collect all the environment variables running on that pipeline execution and send them to senhasegura DSM.
 
-Then, it will query for all the application secrets registered, injecting them in a file called **.runb.vars**, which can be sourcered on the system to update the environment variables with the new values through the command bellow:
+Then, it will query for all the application secrets registered, injecting them in a file called **.runb.vars** by default or whatever is set on **SENHASEGURA_SECRETS_FILE** if provided, which can be sourcered on the system to update the environment variables with the new values through the command bellow:
 
 ```bash
 source .runb.vars
@@ -70,7 +79,7 @@ Using DSM CLI also allows developers to create or update secret values directly 
 
 To do that, the only additional configuration needed is actually to provide the mapping file together with the executable and the configuration file. Here is an example of mapping file's content:
 
-``` json title="senhasegura-mapping.json"
+``` json
 {
   "access_keys": [
     {
