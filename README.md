@@ -7,7 +7,7 @@ Using this plugin, DevOps teams have an easy way to centralize application and s
 
 ## Using DSM CLI as Running Belt
 
-As for today, senhasegura DSM CLI can only be executed as Running Belt.
+As for today, senhasegura DSM CLI can only be executed as Running Belt, which reads Secrets from senhasegura DSM module and inject them as environment variables.
 
 As an executable binary, the installation is quite simple. Before deploying the plugin it is important to have a configured application using OAuth 2.0 and an authorization on senhasegura DSM. For more information on how to register applications and authorizations, please check the DSM manual in [Help Center](https://docs.senhasegura.io/?utm_source=Github&utm_medium=Link&utm_campaign=dsm_cli).
 
