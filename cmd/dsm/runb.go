@@ -60,7 +60,7 @@ var RunbCmd = &cobra.Command{
 
 		_, err = varClient.Register(envVars, mapVars)
 		if err != nil {
-			return errors.Errorf("error when posting variables in senhasegura: " + err.Error())
+			return errors.Errorf("Error when posting variables in senhasegura: " + err.Error())
 		}
 
 		secrets, err := appClient.GetSecrets()
@@ -79,10 +79,10 @@ var RunbCmd = &cobra.Command{
 
 func init() {
 	RunbCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
-	RunbCmd.Flags().StringVarP(&ToolName, "tool-name", "t", "linux", "Tool name [github, azure-devops, bamboo, bitbucket, circleci, teamcity, linux]")
 	RunbCmd.Flags().StringVarP(&ApplicationName, "application", "a", "", "Application name (required)")
 	RunbCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
 	RunbCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
+	RunbCmd.Flags().StringVarP(&ToolName, "tool", "t", "linux", "Tool name [github, azure-devops, bamboo, bitbucket, circleci, teamcity, linux]")
 	RunbCmd.MarkFlagRequired("application")
 	RunbCmd.MarkFlagRequired("system")
 	RunbCmd.MarkFlagRequired("environment")
@@ -110,10 +110,7 @@ func injectEnvironmentVariables(secrets []dsmSdk.Secret) error {
 		return injectLinux(secrets)
 
 	default:
-		return errors.Errorf(
-			"tool-name '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux",
-			ToolName,
-		)
+		return errors.Errorf("Tool '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux", ToolName)
 	}
 }
 
@@ -234,10 +231,7 @@ func deleteCICDVariables() error {
 		v("Is not possible to delete %s variables!\n", ToolName)
 
 	default:
-		return errors.Errorf(
-			"tool-name '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux",
-			ToolName,
-		)
+		return errors.Errorf("Tool '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux", ToolName)
 	}
 
 	v("Finish\n")
@@ -254,7 +248,7 @@ func deleteGitLabVars() error {
 
 	if len(kv) == 0 {
 		v("Deletion failed\n")
-		v("Has no credentials to exclude variables on 'gitlab' tool ...\n")
+		v("Has no credentials to exclude variables on '%s' tool ...\n", ToolName)
 		return nil
 	}
 
