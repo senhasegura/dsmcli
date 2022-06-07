@@ -18,20 +18,20 @@ package dsm
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 
-	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
-	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	dsmSdk "github.com/senhasegura/dsmcli/sdk/dsm"
+	isoSdk "github.com/senhasegura/dsmcli/sdk/iso"
 )
 
-var PreparedData map[string]string
+var kv map[string]string
 
 var Verbose bool
 var ToolName string
@@ -41,27 +41,26 @@ var ApplicationName string
 
 var RunbCmd = &cobra.Command{
 	Use:   "runb",
-	Short: "Running Belt plugin to insert/get/replace environment variables in most CI/CD process.",
-	Long:  `Running Belt plugin to insert/get/replace environment variables in most CI/CD process.`,
+	Short: "Running Belt plugin to insert/get/replace environment variables in most CI/CD pipelines.",
+	Long:  `Running Belt plugin to insert/get/replace environment variables in most CI/CD pipelines.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if isDisabled() {
-			return errors.Errorf("RUNB_DISABLED is set - Plugin is disabled")			
+			return errors.Errorf("RUNB_DISABLED is set to true. Plugin is disabled.")
 		}
 
-		client, appClient, err := registerApplication();
+		client, appClient, err := registerApplication()
 		if err != nil {
 			return err
 		}
 
 		envVars := loadEnvVars()
 		mapVars := loadMapVars()
-		var helm string
 
 		varClient := dsmSdk.NewVariableClient(&client)
 
-		_, err = varClient.Register(envVars, mapVars, helm)
+		_, err = varClient.Register(envVars, mapVars)
 		if err != nil {
-			return errors.Errorf("error when posting variables in senhasegura: " + err.Error())
+			return errors.Errorf("Error when posting variables in senhasegura: " + err.Error())
 		}
 
 		secrets, err := appClient.GetSecrets()
@@ -78,28 +77,40 @@ var RunbCmd = &cobra.Command{
 	},
 }
 
+func init() {
+	RunbCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
+	RunbCmd.Flags().StringVarP(&ApplicationName, "application", "a", "", "Application name (required)")
+	RunbCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
+	RunbCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
+	RunbCmd.Flags().StringVarP(&ToolName, "tool", "t", "linux", "Tool name [github, azure-devops, bamboo, bitbucket, circleci, teamcity, linux]")
+	RunbCmd.MarkFlagRequired("application")
+	RunbCmd.MarkFlagRequired("system")
+	RunbCmd.MarkFlagRequired("environment")
+}
+
+func isDisabled() bool {
+	return viper.GetString("RUNB_DISABLED") == "1"
+}
+
 func injectEnvironmentVariables(secrets []dsmSdk.Secret) error {
 	switch ToolName {
 	case "github":
-		return injectGithub(secrets);
+		return injectGithub(secrets)
 	case "azure-devops":
-		return injectAzureDevops(secrets);
+		return injectAzureDevops(secrets)
 	case "bamboo":
-		return injectBamboo(secrets);
+		return injectBamboo(secrets)
 	case "bitbucket":
-		return injectBitbucket(secrets);
+		return injectBitbucket(secrets)
 	case "circleci":
-		return injectCircleci(secrets);
+		return injectCircleci(secrets)
 	case "teamcity":
-		return injectTeamcity(secrets);
+		return injectTeamcity(secrets)
 	case "linux":
-		return injectLinux(secrets);
+		return injectLinux(secrets)
 
 	default:
-		return errors.Errorf(
-			"tool-name '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux",
-			ToolName,
-		)
+		return errors.Errorf("Tool '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux", ToolName)
 	}
 }
 
@@ -133,94 +144,118 @@ func injectLinux(secrets []dsmSdk.Secret) error {
 
 func inject(secrets []dsmSdk.Secret, format string) error {
 	v("Injecting secrets!\n")
-	file, err := os.OpenFile(".runb.vars", os.O_CREATE|os.O_RDWR, 0666)
-	if err != nil {
-		return err
-	}
-	
-	PreparedData = prepareData(secrets)
-	
-	if len(PreparedData) == 0 {
+
+	kv = convertJSONToKV(secrets)
+
+	if len(kv) == 0 {
 		v("No secrets to be injected!\n")
 		return nil
 	}
-	
-	for key, value := range PreparedData {
-		v("Injecting secret: %s...", key)
+
+	secretsFile := viper.GetString("SENHASEGURA_SECRETS_FILE")
+
+	if secretsFile == "" {
+		secretsFile = ".runb.vars"
+	}
+
+	file, err := os.OpenFile(secretsFile, os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		return err
+	}
+
+	for key, value := range kv {
+		v("Injecting secret into %s: %s.....", secretsFile, key)
+
 		_, err = file.WriteString(fmt.Sprintf(format, key, value))
 		if err != nil {
 			return err
 		}
-		v(" Sucess\n")
+
+		v("Success!\n")
 	}
-	
+
 	file.Close()
+
 	v("Secrets injected!\n")
+
 	return nil
+}
+
+func convertJSONToKV(secrets []dsmSdk.Secret) map[string]string {
+	kv := make(map[string]string)
+	for _, secret := range secrets {
+		for _, data := range secret.Data {
+			for k, v := range data {
+				kv[k] = v
+			}
+
+		}
+	}
+	return kv
 }
 
 func deleteCICDVariables() error {
 	v("Deleting %s variables...\n", ToolName)
-	
-	if len(PreparedData) == 0 {
+
+	if len(kv) == 0 {
 		v("No variables to be deleted!\n")
 		return nil
 	}
-	
+
 	switch ToolName {
-	case "github":
-		err := deleteGithubVars();
+	case "gitlab":
+		err := deleteGitLabVars()
 		if err != nil {
 			return err
 		}
-		
+
+	case "github":
+		v("Is not possible to delete %s variables!\n", ToolName)
+
 	case "azure-devops":
 		v("Is not possible to delete %s variables!\n", ToolName)
-		
+
 	case "bamboo":
 		v("Is not possible to delete %s variables!\n", ToolName)
-		
+
 	case "bitbucket":
 		v("Is not possible to delete %s variables!\n", ToolName)
-		
+
 	case "circleci":
 		v("Is not possible to delete %s variables!\n", ToolName)
-		
+
 	case "teamcity":
 		v("Is not possible to delete %s variables!\n", ToolName)
-		
+
 	case "linux":
 		v("Is not possible to delete %s variables!\n", ToolName)
-		
+
 	default:
-		return errors.Errorf(
-			"tool-name '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux",
-			ToolName,
-		)
+		return errors.Errorf("Tool '%s' is invalid, it must be one of the following values: github, azure-devops, bamboo, bitbucket, circleci, teamcity or linux", ToolName)
 	}
-	
+
 	v("Finish\n")
-	
+
 	return nil
 }
 
-func deleteGithubVars() error {
+func deleteGitLabVars() error {
 	if !IsSet("GITLAB_ACCESS_TOKEN", "CI_API_V4_URL", "CI_PROJECT_ID") {
 		v("Deletion failed\n")
 		v("To delete github variables, you need to define the configs GITLAB_ACCESS_TOKEN, CI_API_V4_URL and CI_PROJECT_ID\n")
 		return nil
 	}
 
-	if len(PreparedData) == 0 {
+	if len(kv) == 0 {
 		v("Deletion failed\n")
-		v("Has no credentials to exclude variables on 'github' tool ...\n")
+		v("Has no credentials to exclude variables on '%s' tool ...\n", ToolName)
 		return nil
 	}
 
-	headers := map[string]string{"PRIVATE-TOKEN": viper.GetString("GITLAB_ACCESS_TOKEN")}	
-	
-	for key := range PreparedData {
-		v("Delelting %s variable\n", key)
+	headers := map[string]string{"PRIVATE-TOKEN": viper.GetString("GITLAB_ACCESS_TOKEN")}
+
+	for key := range kv {
+		v("Deleting %s variable\n", key)
 
 		resource := fmt.Sprintf(
 			"%s/projects/%s/variables/%s",
@@ -241,48 +276,15 @@ func deleteGithubVars() error {
 			v("Failed trying to delete '%s' variable\n", err.Error())
 			continue
 		}
-		
+
 		v("Deleted\n")
 	}
 	return nil
 }
 
-func IsSet(name ...string) bool {
-	for _, n := range name {
-		if (viper.GetString(n) == "") {
-			v("The config %s is empty\n", n)
-			return false
-		}
-	}
-	return true
-}
-
-func v(format string, a ...interface{}) {
-	if Verbose {
-		fmt.Printf(format, a...)
-	}
-}
-
-func prepareData(secrets []dsmSdk.Secret) map[string]string {
-	preparedData := make(map[string]string)
-	for _, secret := range secrets {
-		for _, data := range secret.Data {
-			for k, v := range data {
-				preparedData[k] = v
-			}
-			
-		}
-	}
-	return preparedData
-}
-
-func isDisabled() bool {
-	return viper.GetString("RUNB_DISABLED") == "1"
-}
-
-func registerApplication() (isoSdk.Client, dsmSdk.ApplicationClient, error){
-	client, _ := isoSdk.NewClient(getConfig());
-	appClient := dsmSdk.NewApplicationClient(&client, ApplicationName, Environment, System);
+func registerApplication() (isoSdk.Client, dsmSdk.ApplicationClient, error) {
+	client, _ := isoSdk.NewClient(getConfig())
+	appClient := dsmSdk.NewApplicationClient(&client, ApplicationName, Environment, System)
 
 	appResponse, err := appClient.Register()
 	if err != nil {
@@ -294,13 +296,6 @@ func registerApplication() (isoSdk.Client, dsmSdk.ApplicationClient, error){
 	return client, appClient, nil
 }
 
-func getConfig() (string, string, string, bool) {
-	return viper.GetString("SENHASEGURA_URL"),
-			viper.GetString("SENHASEGURA_CLIENT_ID"),
-			viper.GetString("SENHASEGURA_CLIENT_SECRET"),
-			Verbose;
-}
-
 func loadEnvVars() string {
 	envVars := strings.Join(os.Environ(), "\n")
 	envVars = base64.StdEncoding.EncodeToString([]byte(envVars))
@@ -309,31 +304,19 @@ func loadEnvVars() string {
 }
 
 func loadMapVars() string {
-	content, err := ioutil.ReadFile("senhasegura-mapping.json")
+	if !IsSet("SENHASEGURA_MAPPING_FILE") {
+		v("Mapping file not found, proceeding...\n")
+	} else {
+		v("Using mapping file: %s\n", viper.GetString("SENHASEGURA_MAPPING_FILE"))
+	}
+
+	content, err := os.ReadFile(viper.GetString("SENHASEGURA_MAPPING_FILE"))
 	if err != nil {
 		return ""
 	}
+
 	mapVars := string(content)
 	mapVars = base64.StdEncoding.EncodeToString([]byte(mapVars))
 	mapVars = replaceSpecials(mapVars)
 	return mapVars
-}
-
-func replaceSpecials(value string) string {
-	value = strings.Replace(value, "+", "-", -1)
-	value = strings.Replace(value, "/", "_", -1)
-	value = strings.Replace(value, "=", ",", -1)
-	return value
-}
-
-
-func init() {
-	RunbCmd.Flags().BoolVarP(&Verbose, "verbose", "v", false, "Verbose mode")
-	RunbCmd.Flags().StringVarP(&ToolName, "tool-name", "t", "linux", "Tool name [github, azure-devops, bamboo, bitbucket, circleci, teamcity, linux]")	
-	RunbCmd.Flags().StringVarP(&Environment, "environment", "e", "", "Application environment (required)")
-	RunbCmd.Flags().StringVarP(&System, "system", "s", "", "Application system (required)")
-	RunbCmd.Flags().StringVar(&ApplicationName, "app-name", "", "Application name (required)")
-	RunbCmd.MarkFlagRequired("environment")
-	RunbCmd.MarkFlagRequired("system")
-	RunbCmd.MarkFlagRequired("app-name")
 }

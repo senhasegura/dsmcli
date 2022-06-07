@@ -7,7 +7,7 @@ import (
 )
 
 type VariableClient struct {
-	client      *sdk.Client
+	client *sdk.Client
 }
 
 /**
@@ -15,7 +15,7 @@ type VariableClient struct {
  */
 func NewVariableClient(client *sdk.Client) VariableClient {
 	a := VariableClient{
-		client:      client,
+		client: client,
 	}
 
 	return a
@@ -25,15 +25,14 @@ func NewVariableClient(client *sdk.Client) VariableClient {
  * Post variables on senhasegura using the cicd endpoint
  * "POST /iso/cicd/variables"
  */
-func (a *VariableClient) Register(envVars string, mapVars string, helm string) (VariableResponse, error) {
+func (a *VariableClient) Register(envVars string, mapVars string) (VariableResponse, error) {
 	a.client.V("Posting variables in senhasegura...\n")
 
 	a.client.Authenticate()
 
 	data := url.Values{
-		"env":  {envVars},
-		"map":  {mapVars},
-		"helm": {helm},
+		"env": {envVars},
+		"map": {mapVars},
 	}
 
 	var varResp VariableResponse

@@ -7,11 +7,11 @@ Using this plugin, DevOps teams have an easy way to centralize application and s
 
 ## Using DSM CLI as Running Belt
 
-The CLI can be executed in two main modes: RunB and Kubernetes. In this section we are going to explain the usage through the RunB option.
+As for today, senhasegura DSM CLI can only be executed as Running Belt, which reads Secrets from senhasegura DSM module and inject them as environment variables.
 
-As an executable binary, its installation is quite simple. Before deploying the plugin it is important to have a configured application using OAuth 2.0 and an authorization on senhasegura DSM. For more information on how to register applications and authorizations, please check the DSM manual in [Help Center](https://docs.senhasegura.io/?utm_source=Github&utm_medium=Link&utm_campaign=dsm_cli).
+As an executable binary, the installation is quite simple. Before deploying the plugin it is important to have a configured application using OAuth 2.0 and an authorization on senhasegura DSM. For more information on how to register applications and authorizations, please check the DSM manual in [Help Center](https://docs.senhasegura.io/?utm_source=Github&utm_medium=Link&utm_campaign=dsm_cli).
 
-The first thing needed is to the executable into a directory of your environment or CI/CD tool together with a configuration file for authentication on senhasegura DSM. After that, DSM CLI need information from the configured application such as its name, system and environment so it can retrieve the secrets.
+The first thing needed is to place the executable into a directory of your environment or CI/CD tool together with a configuration file for authentication on senhasegura DSM. After that, DSM CLI need information from the configured application such as its name, system and environment so it can retrieve the secrets.
 
 For the configuration file, it should be a .yaml file containing the following information from senhasegura DSM:
 
@@ -19,12 +19,21 @@ For the configuration file, it should be a .yaml file containing the following i
 - **_SENHASEGURA_CLIENT_ID:_** An authorization Client ID for authentication.
 - **_SENHASEGURA_CLIENT_SECRET:_** An authorization Client Secret for authentication.
 
-Example of a **.config.yaml** file:
+DSM CLI accepts extra parameters. Here is an axample of a **full .config.yaml** file:
 
 ```yaml title=".config.yaml"
+# Default properties needed for execution
 SENHASEGURA_URL: "<senhasegura URL>"
 SENHASEGURA_CLIENT_ID: "<senhasegura Client ID>"
 SENHASEGURA_CLIENT_SECRET: "<senhasegura Client Secret>"
+SENHASEGURA_MAPPING_FILE: "<Secrets variable name mapping file with path>"
+SENHASEGURA_SECRETS_FILE: "<File name with path to inject Secret>"
+RUNB_DISABLED: 0
+
+# Properties needed to delete GitLab variables
+GITLAB_ACCESS_TOKEN: "<Your GitLab Access Token>"
+CI_API_V4_URL: "<Your GitLab API URL as for V4>"
+CI_PROJECT_ID: "<Your GitLab Project ID>"
 ```
 
 > **Using Environment Variables**
@@ -35,17 +44,20 @@ To execute the binary you can run the following command line providing the neede
 
 ```bash
 dsm runb \
-    --app-name <application name> \
+    --application <application name> \
     --system <system name> \
     --environment <environment name> \
     --config <path to config file>
 ```
+> **Using Environment Variables**
+> 
+> It is possible to use a **SENHASEGURA_CONFIG_FILE** environment variable to define the configuration file location.
 
 Being agnostic means that it can run in any environment or CI/CD tool, but DSM CLI already comes with some additional configuration allowing you to integrate more seamlessly with your tool.
 
 After executing the plugin with the necessary informations, it will collect all the environment variables running on that pipeline execution and send them to senhasegura DSM.
 
-Then, it will query for all the application secrets registered, injecting them in a file called **.runb.vars**, which can be sourcered on the system to update the environment variables with the new values through the command bellow:
+Then, it will query for all the application secrets registered, injecting them in a file called **.runb.vars** by default or whatever is set on **SENHASEGURA_SECRETS_FILE** if provided, which can be sourcered on the system to update the environment variables with the new values through the command bellow:
 
 ```bash
 source .runb.vars
@@ -61,54 +73,13 @@ This way, developers will not have to worry about injecting secrets during pipel
 > 
 > By default DSM CLI can parse the secrets and inject it on tools like GitHub, Azure DevOps, Bamboo, BitBucket, CircleCI, TeamCity and Linux (default option). You can change the default option with the --tool-name argument during its execution.
 
-## Using DSM CLI as Kubernetes Sidecar
-
-The DSM CLI also have an option to run similarly to the Kubernetes Sidecar plugin, where it fetches the secrets from senhasegura DSM and inject them as files in a user defined folder (usually /var/run/secrets/senhasegura).
-
-This method also allows you to run it as sidecar or init-container. As a sidecar, DSM CLI will run continuously, updating the secrets every 120 seconds, while as init-container it will run only once during its execution.
-
-You can use the following commands to execute it as sidecar:
-
-```bash
-dsm kubernetes sidecar \
-    --app-name <application name>
-    --system <system name> \
-    --environment <environment name> \
-    --config <path to config file>
-```
-
-Or the following to execute it as init-container:
-
-```bash
-dsm kubernetes init-container \
-    --app-name <application name>
-    --system <system name> \
-    --environment <environment name> \
-    --config <path to config file>
-```
-
-> **Inject Secrets on the Default Folder**
-> 
-> The default folder for secret injection is `/var/run/secrets/senhasegura/<secret identifier>`. To inject secrets in the default folder make sure you run it with administrative privileges.
-
-> **Change Secrets Default Folder**
-> 
-> Additionally, in the config file you can define the **SENHASEGURA_SECRETS_FOLDER** with a path where you want the plugin to make the secret data available, as in the example:
-
-``` yaml title=".config.yaml"
-SENHASEGURA_URL: "<senhasegura URL>"
-SENHASEGURA_CLIENT_ID: "<senhasegura Client ID>"
-SENHASEGURA_CLIENT_SECRET: "<senhasegura Client Secret>"
-SENHASEGURA_SECRETS_FOLDER: "<senhasegura Secrets Destination Folder>"
-```
-
 ## Using DSM CLI to Register and Update Secrets
 
-Using DSM CLI also allows developers to create or update secret values directly from the pipeline using a mapping file called **senhasegura-mapping.json**. This file makes it easy to identify secret variables through their names and automatically register them as secrets on senhasegura DSM.
+Using DSM CLI also allows developers to create or update secret values directly from the pipeline using a mapping file. This file makes it easy to identify secret variables through their names and automatically register them as secrets on senhasegura DSM.
 
 To do that, the only additional configuration needed is actually to provide the mapping file together with the executable and the configuration file. Here is an example of mapping file's content:
 
-``` json title="senhasegura-mapping.json"
+``` json
 {
   "access_keys": [
     {
@@ -147,7 +118,7 @@ This file can be broken down in 3 main blocks:
 
 > **Mapping File Name**
 > 
-> This file should be named exactly as senhasegura-mapping.json and should be on the same directory level as the executable.
+> To set the name of the file so DSM CLI can read it use the **SENHASEGURA_MAPPING_FILE** option in the configuration file or set its value as an environment variable pointing to the file full path.
 
 > **Type Values**
 > 

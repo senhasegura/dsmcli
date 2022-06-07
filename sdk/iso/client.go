@@ -13,11 +13,11 @@ import (
 )
 
 type Client struct {
-	Verbose      bool
 	url          string
 	clientID     string
 	clientSecret string
 	accessToken  string
+	Verbose      bool
 }
 
 /**
@@ -26,24 +26,24 @@ type Client struct {
 func NewClient(senhaseguraUrl string, clientID string, clientSecret string, verbose bool) (Client, error) {
 	url := strings.Trim(string(senhaseguraUrl), "\n ")
 	if url == "" {
-		return Client{}, fmt.Errorf("senhaseguraUrl cannot be null")
+		return Client{}, fmt.Errorf("URL cannot be null")
 	}
 
 	clientID = strings.Trim(string(clientID), "\n ")
 	if clientID == "" {
-		return Client{}, fmt.Errorf("clientID cannot be null")
+		return Client{}, fmt.Errorf("Client ID cannot be null")
 	}
 
 	clientSecret = strings.Trim(string(clientSecret), "\n ")
 	if clientSecret == "" {
-		return Client{}, fmt.Errorf("clientSecret cannot be null")
+		return Client{}, fmt.Errorf("Client Secret cannot be null")
 	}
 
 	c := Client{
-		Verbose:      verbose,
 		url:          url,
 		clientID:     clientID,
 		clientSecret: clientSecret,
+		Verbose:      verbose,
 	}
 
 	return c, nil
@@ -52,12 +52,12 @@ func NewClient(senhaseguraUrl string, clientID string, clientSecret string, verb
 func (c *Client) DefineNewCredentials(clientID string, clientSecret string) error {
 	clientID = strings.Trim(string(clientID), "\n ")
 	if clientID == "" {
-		return fmt.Errorf("clientID cannot be null")
+		return fmt.Errorf("Client ID cannot be null")
 	}
 
 	clientSecret = strings.Trim(string(clientSecret), "\n ")
 	if clientSecret == "" {
-		return fmt.Errorf("clientSecret cannot be null")
+		return fmt.Errorf("Client Secret cannot be null")
 	}
 
 	c.clientID = clientID
@@ -79,6 +79,7 @@ func (c *Client) Authenticate() {
 	data.Set("client_secret", c.clientSecret)
 
 	var oauth2Resp Oauth2Response
+
 	err := c.Post(resource, data, &oauth2Resp)
 	if err != nil {
 		log.Fatal("Error trying to authenticate: " + err.Error())
@@ -138,7 +139,6 @@ func (c Client) call(method string, resource string, data url.Values, responseOb
 	return nil
 }
 
-
 func DoRequest(host string, resource string, data url.Values, headers map[string]string, method string) ([]byte, error) {
 	u, err := url.ParseRequestURI(host)
 	if err != nil {
@@ -148,8 +148,8 @@ func DoRequest(host string, resource string, data url.Values, headers map[string
 	urlStr := u.String()
 
 	tr := &http.Transport{
-        TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-    }	
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	httpClient := &http.Client{Transport: tr}
 	r, err := http.NewRequest(method, urlStr, strings.NewReader(data.Encode()))
 	if err != nil {
