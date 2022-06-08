@@ -153,12 +153,11 @@ func inject(secrets []dsmSdk.Secret, format string) error {
 	}
 
 	secretsFile := viper.GetString("SENHASEGURA_SECRETS_FILE")
-
 	if secretsFile == "" {
 		secretsFile = ".runb.vars"
 	}
 
-	file, err := os.OpenFile(secretsFile, os.O_CREATE|os.O_RDWR, 0666)
+	file, err := os.OpenFile(secretsFile, os.O_CREATE|os.O_RDWR, 0660)
 	if err != nil {
 		return err
 	}
@@ -183,6 +182,7 @@ func inject(secrets []dsmSdk.Secret, format string) error {
 
 func convertJSONToKV(secrets []dsmSdk.Secret) map[string]string {
 	kv := make(map[string]string)
+
 	for _, secret := range secrets {
 		for _, data := range secret.Data {
 			for k, v := range data {
@@ -191,6 +191,7 @@ func convertJSONToKV(secrets []dsmSdk.Secret) map[string]string {
 
 		}
 	}
+
 	return kv
 }
 
