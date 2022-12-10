@@ -1,7 +1,7 @@
 package dsm
 
 import (
-	"C"
+	// "C"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,14 +9,15 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+
+	"github.com/spf13/viper"
 )
-import "github.com/spf13/viper"
 
 type ApplicationResponse struct {
-	ID          string   `json:"id"`
-	Signature   string   `json:"signature"`
-	Error       string   `json:"error"`
-	Message     string   `json:"message"`
+	ID          string      `json:"id"`
+	Signature   string      `json:"signature"`
+	Error       string      `json:"error"`
+	Message     string      `json:"message"`
 	Application Application `json:"application"`
 	Response    struct {
 		Status    int    `json:"status"`
@@ -27,12 +28,12 @@ type ApplicationResponse struct {
 }
 
 type Application struct {
-	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	Tags         []string `json:"tags"`
-	System       string   `json:"system"`
-	Environment  string   `json:"Environment"`
-	Secrets      secrets `json:"secrets"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
+	System      string   `json:"system"`
+	Environment string   `json:"Environment"`
+	Secrets     secrets  `json:"secrets"`
 }
 
 type secrets []Secret
@@ -46,7 +47,6 @@ type Secret struct {
 	Engine         string              `json:"engine"`
 	Data           []map[string]string `json:"data"`
 }
-
 
 func (r *ApplicationResponse) Unmarshal(msg []byte) error {
 	err := json.Unmarshal(msg, r)
@@ -136,15 +136,14 @@ func (a *ApplicationResponse) SaveToFile() error {
 	return nil
 }
 
-
 /**
  * Save multiple credentials on folders
  * "/var/run/secrets/senhasegura/[application_name]"
  */
- func (s secrets) SaveToFile() error {
+func (s secrets) SaveToFile() error {
 	fmt.Println("Adding credentials to system...")
 
-	secretDirectory := viper.GetString("SENHASEGURA_SECRETS_FOLDER")+"/senhasegura"
+	secretDirectory := viper.GetString("SENHASEGURA_SECRETS_FOLDER") + "/senhasegura"
 
 	err := os.MkdirAll(secretDirectory, os.ModePerm)
 	if err != nil {
@@ -242,23 +241,22 @@ func (s Secret) getMinTTL(current int64) int64 {
 	return newTTL
 }
 
-
 // Remove o conteudo de um diretorio
 func RemoveContents(dir string) error {
-    d, err := os.Open(dir)
-    if err != nil {
-        return err
-    }
-    defer d.Close()
-    names, err := d.Readdirnames(-1)
-    if err != nil {
-        return err
-    }
-    for _, name := range names {
-        err = os.RemoveAll(filepath.Join(dir, name))
-        if err != nil {
-            return err
-        }
-    }
-    return nil
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
