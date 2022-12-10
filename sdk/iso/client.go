@@ -3,7 +3,7 @@
 package iso
 
 import (
-	"C"
+	// "C"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
