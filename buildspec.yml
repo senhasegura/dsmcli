@@ -1,0 +1,50 @@
+version: 0.2
+
+batch:
+  build-list:
+    - identifier: build1
+      env:
+        variables:
+          GOOS: darwin
+          GOARCH: amd64
+    - identifier: build2
+      env:
+        variables:
+          GOOS: darwin
+          GOARCH: arm64
+    - identifier: build3
+      env:
+        variables:
+          GOOS: windows
+          GOARCH: amd64
+    - identifier: build4
+      env:
+        variables:
+          GOOS: windows
+          GOARCH: arm
+    - identifier: build5
+      env:
+        variables:
+          GOOS: linux
+          GOARCH: amd64
+    - identifier: build6
+      env:
+        variables:
+          GOOS: linux
+          GOARCH: arm64
+
+phases:
+  install:
+    runtime-versions:
+      golang: 1.19
+
+  build:
+    commands:
+      - go build 
+
+artifacts:
+  files:
+    - 'dsm'
+    - 'dsm.exe'
+    - 'README.md'
+  name: dsm_${GOOS}_${GOARCH}_$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7).zip
