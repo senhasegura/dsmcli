@@ -1,4 +1,3 @@
-
 # senhasegura DSM CLI
 
 DSM CLI is an unified tool to manage senhasegura services. With this tool, you'll be able to use senhasegura DSM services from the command line and automate them using scripts. The main purpose of this tool is to be an agnostic plugin for intercepting environment variables and injecting secrets into systems and CI/CD pipelines.
