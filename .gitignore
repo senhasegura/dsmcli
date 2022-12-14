@@ -1,5 +1,3 @@
 /build
 /.vscode
 dockerfile
-go-build.sh
-buildspec.yml
