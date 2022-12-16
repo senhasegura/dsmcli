@@ -45,7 +45,7 @@ var RunbCmd = &cobra.Command{
 	Long:  `Running Belt plugin to insert/get/replace environment variables in most CI/CD pipelines.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if isDisabled() {
-			return errors.Errorf("RUNB_DISABLED is set to true. Plugin is disabled.")
+			return errors.Errorf("SENHASEGURA_DISABLE_RUNB is set to true. Plugin is disabled.")
 		}
 
 		client, appClient, err := registerApplication()
@@ -89,7 +89,7 @@ func init() {
 }
 
 func isDisabled() bool {
-	return viper.GetString("RUNB_DISABLED") == "1"
+	return viper.GetBool("SENHASEGURA_DISABLE_RUNB")
 }
 
 func injectEnvironmentVariables(secrets []dsmSdk.Secret) error {
@@ -119,7 +119,7 @@ func injectGithub(secrets []dsmSdk.Secret) error {
 }
 
 func injectAzureDevops(secrets []dsmSdk.Secret) error {
-	return inject(secrets, "##vso[task.setvariable variable=(%s);issecret=true;](.[%s])\n")
+	return inject(secrets, "echo '##vso[task.setvariable variable=%s;issecret=true;]%s'\n")
 }
 
 func injectBamboo(secrets []dsmSdk.Secret) error {
@@ -153,12 +153,11 @@ func inject(secrets []dsmSdk.Secret, format string) error {
 	}
 
 	secretsFile := viper.GetString("SENHASEGURA_SECRETS_FILE")
-
 	if secretsFile == "" {
 		secretsFile = ".runb.vars"
 	}
 
-	file, err := os.OpenFile(secretsFile, os.O_CREATE|os.O_RDWR, 0666)
+	file, err := os.OpenFile(secretsFile, os.O_CREATE|os.O_RDWR, 0660)
 	if err != nil {
 		return err
 	}
@@ -183,6 +182,7 @@ func inject(secrets []dsmSdk.Secret, format string) error {
 
 func convertJSONToKV(secrets []dsmSdk.Secret) map[string]string {
 	kv := make(map[string]string)
+
 	for _, secret := range secrets {
 		for _, data := range secret.Data {
 			for k, v := range data {
@@ -191,6 +191,7 @@ func convertJSONToKV(secrets []dsmSdk.Secret) map[string]string {
 
 		}
 	}
+
 	return kv
 }
 

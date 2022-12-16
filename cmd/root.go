@@ -78,7 +78,7 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	} else {
-		fmt.Fprintln(os.Stderr, "No config file provided, proceeding...", viper.ConfigFileUsed())
+		fmt.Fprintln(os.Stderr, "No config file provided, proceeding...")
 
 		if strings.Contains(err.Error(), "unmarshal") {
 			log.Fatalf(`Invalid yaml syntax on config file '%s'`, viper.ConfigFileUsed())

@@ -1,7 +1,6 @@
 package iso
 
 import (
-	"C"
 	"encoding/json"
 	"fmt"
 )
