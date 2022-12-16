@@ -28,7 +28,7 @@ SENHASEGURA_CLIENT_ID: "<senhasegura Client ID>"
 SENHASEGURA_CLIENT_SECRET: "<senhasegura Client Secret>"
 SENHASEGURA_MAPPING_FILE: "<Secrets variable name mapping file with path>"
 SENHASEGURA_SECRETS_FILE: "<File name with path to inject Secret>"
-RUNB_DISABLED: 0
+SENHASEGURA_DISABLE_RUNB: 0
 
 # Properties needed to delete GitLab variables
 GITLAB_ACCESS_TOKEN: "<Your GitLab Access Token>"
