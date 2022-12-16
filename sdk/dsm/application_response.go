@@ -1,7 +1,6 @@
 package dsm
 
 import (
-	// "C"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
